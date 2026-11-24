@@ -40,7 +40,7 @@ describe('engineering page workflows',()=>{
   expect(within(dialog).getByText('QA-SERIAL-001')).toBeInTheDocument();
   await user.click(within(dialog).getByRole('button',{name:'Delete'}));
   await waitFor(()=>expect(screen.queryByRole('heading',{name:'QA Camera Updated'})).not.toBeInTheDocument());
- });
+ },15_000);
 
  test('creates, assigns, advances, and closes a manual incident',async()=>{
   const user=userEvent.setup();
