@@ -1,30 +1,40 @@
-# Foundation handoff
+# Engineering handoff
 
 ## Implemented
 
-Overview, Facilities, Team & Tasks, Settings; shell, themes, responsive navigation, local data, workspace export. Overview derives all six metrics from common data; facility equipment health uses room/floor relations. Room condition and equipment condition are separate fields. Kanban uses accessible status selects rather than drag-only controls. Employee cards open profiles; demo employees are read-only.
+- Foundation modules retained: Overview, Facilities, Team & Tasks, Settings, responsive shell, themes, and local data.
+- Asset Management with inventory CRUD, filters, sorting, card/table views, QR links, CSV, locations, ownership, and linked history.
+- Simulated Hardware Monitoring with category-aware telemetry, eight scenarios, bounded history, automatic fault detection, deduplicated incidents, notifications, and recovery.
+- Incident Management with manual/monitoring sources, assignment, comments, history, priorities, four statuses, overdue handling, Kanban/table views, close/reopen.
+- Maintenance with calendar, recurring schedules, templates, checklists, completion, history, and asset date updates.
+- HSE demonstration with hazards, risk scores, inspections, corrective actions, deadlines, filters, and a 5×5 matrix.
+- Analytics derived from shared data, including explicit current availability versus historical uptime, CSV, and print output.
+- Version 2 storage migration, deep backup validation/import/export, relationship guards, global search, notification center, and accessible modal focus management.
+- Vitest/RTL tooling, ESLint, lockfile, CI validation, and main-only GitHub Pages deployment workflow.
 
-## Add a module
+## Add or change a workflow
 
-1. Use the existing entity interfaces in `src/types/index.ts`.
-2. Read `data` via `useWorkspace()`.
-3. Call `update(d => ({...d, collection: next}), 'Activity message')`; never mutate the previous object.
-4. Add the page and explicit route in `main.tsx`, replacing the planned route.
-5. Reuse Button, Field, Modal, Badge, PageTitle and shared CSS tokens.
-6. Verify related IDs and extend deletion rules when introducing dependencies.
+1. Extend authoritative interfaces in `src/types/index.ts`.
+2. Add backward-compatible normalization in `src/services/storage.ts`.
+3. Extend deep and relationship validation in `src/utils/validation.ts`.
+4. Keep business logic pure in `src/utils` or `src/services` and add deterministic tests.
+5. Read data through `useWorkspace()` and return a fresh aggregate from `update()`.
+6. Reuse Button, Field, Modal, Badge, PageTitle, and CSS tokens.
+7. Verify `npm run typecheck && npm run lint && npm test && npm run build`.
 
-## Models
+## Key constraints
 
-Asset (room/category/status), Incident (asset/severity/status/date), Building (address/manager), Floor (building), Room (floor/manager/status), Employee (name/role/demo email), Task (assignee/priority/deadline/status), MaintenanceRecord (asset/schedule/status), SafetyInspection (room/inspector/date/result), Telemetry (asset/metric/value/unit/time), ActivityLog (message/time). Full definitions are authoritative in `types/`.
+- Do not log routine telemetry samples to the Activity Log.
+- Do not infer device recovery from an incident status change.
+- Do not auto-close an incident when telemetry recovers.
+- Preserve incident and maintenance audit history when deleting assets.
+- Keep telemetry, notifications, and activity bounded.
+- Never treat LocalStorage as a security boundary or connect real equipment without a backend ingestion layer.
 
-## Second contributor ownership
+## Deployment
 
-Asset management, incident workflows, live hardware telemetry, maintenance workflows and HSE inspections remain unimplemented. Analytics is also a placeholder. Do not interpret demo incident or telemetry types as integrated infrastructure.
+The Pages workflow is configured but deployment is not confirmed. The repository owner must select **Settings → Pages → Source: GitHub Actions**, merge to `main`, wait for the deployment job, and verify the published URL.
 
-## Known limits and next steps
+## Known limits
 
-No backend, real login, RBAC, multiuser sync, employee CRUD, attachment storage, live telemetry or import. LocalStorage is device-specific and must not hold secrets. Storage payloads receive envelope checks, not full deep validation. Add schema migrations before changing persisted models. Consider server state tooling when an API is available. Add automated browser coverage and manual screen-reader testing before production. Theme, dialogs and navigation have keyboard controls; dialog focus restoration and background inert behavior need further accessibility hardening.
-
-## Integration
-
-Use `npm install`, `npm test`, `npm run build`. Commit package-lock.json after the first successful npm install. For GitHub Pages serve dist with base /HubOps/; enable Pages separately. Foundation PR does not publish a public deployment. Do not implement operational modules inside UI placeholders or rewrite shared types without coordinating.
+No backend, authentication, authorization, RBAC, server audit trail, attachment storage, multi-user sync, real telemetry, or Playwright browser installation exists. HSE is demonstrative and not certified. Static screenshots have not been committed.

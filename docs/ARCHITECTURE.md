@@ -1,23 +1,53 @@
 # Architecture
 
-React + strict TypeScript + Vite, Tailwind CSS v4, shadcn-style local Button built on Radix Slot and CVA, Lucide icons, Recharts, React Router HashRouter.
+HubOps is a frontend-only React application built with strict TypeScript, Vite, Tailwind CSS, React Router `HashRouter`, Recharts, Lucide, Radix Slot, and a local shadcn-style Button.
 
-## Structure
+## Runtime structure
 
-- `types/`: domain entities and aggregate `Data`.
-- `data/`: deterministic fictional seed factory, returning fresh objects.
-- `services/`: versioned browser persistence boundary.
-- `store/`: React context, mutation pipeline, activity log, save errors.
-- `utils/`: derived dashboard metrics, safe location deletion, class merging.
-- `hooks/`: browser theme preference.
-- `components/`: page heading, badges, labeled fields, keyboard-contained dialog, Button.
-- `layouts/`: navigation, responsive shell, global search and notifications.
-- `pages/`: foundation modules and explicit planned pages.
+- `types/`: the version 2 domain schema and relationship identifiers.
+- `data/`: a deterministic, fully fictional seed covering facilities, people, assets, incidents, maintenance, HSE, and simulated device state.
+- `services/storage.ts`: versioned persistence, v1→v2 migration, deep import validation, and JSON serialization.
+- `services/telemetrySimulator.ts`: pure category-capability rules, bounded telemetry generation, scenario application, fault reconciliation, incident deduplication, and recovery.
+- `store/Workspace.tsx`: the immutable update boundary, persistence, activity logging, warning state, and single simulation interval owner.
+- `utils/domain.ts`: relationship-safe deletion and incident/maintenance workflows.
+- `utils/analytics.ts`: pure operational KPI calculations.
+- `utils/validation.ts`: form, schema, and referential-integrity validation.
+- `components/`: shared page heading, semantic badges, accessible modal, fields, and Button.
+- `layouts/`: responsive shell, navigation, global search, and actionable notifications.
+- `pages/`: overview, facilities, team/tasks, assets, monitoring, incidents, maintenance, HSE, analytics, and settings.
 
-Relations: Building → Floor → Room → Asset; Employee → Task and location responsibility; Asset → Incident / MaintenanceRecord / Telemetry; Room → SafetyInspection. IDs are stable seed IDs or crypto.randomUUID for user records.
+Routes are lazy-loaded. `main.tsx` mounts the router and provider; `App.tsx` owns the route tree. Vite uses `/HubOps/` as its production base path.
 
-`useWorkspace().update(transform, message)` computes the next aggregate, saves it, then renders it. Failed saves preserve the current in-memory state and display an error. Data key is `hubops:workspace:v1`, envelope `{ version: 1, data }`. Read failures display a warning rather than silently overwriting saved bytes on load. Basic envelope validation is present; deep schema validation and migrations are future work.
+## Data and update flow
 
-Deleting a location with linked equipment is blocked; empty floor/room hierarchies cascade. Dependent inspections are removed. Equipment migration will belong to Asset Management.
+Pages read the shared aggregate through `useWorkspace()`. Mutations use:
 
-Hash routes require no server rewrite. Browser storage is not a security boundary. A future backend must enforce permissions and validate incoming data, and should replace the persistence service with a versioned API.
+```ts
+update(current => ({...current, collection: next}), 'Activity message')
+```
+
+`Workspace.update` reads from a ref-backed latest snapshot so interval telemetry cannot overwrite a newer user action. The returned aggregate is validated and saved before it becomes visible. Meaningful actions enter the bounded Activity Log; routine telemetry ticks use `{log: false}`.
+
+## Relationships
+
+`Building → Floor → Room → Asset → Incident / Maintenance / DeviceState / Telemetry`
+
+Employees own facilities and are assigned to assets, incidents, tasks, maintenance, inspections, hazards, and corrective actions. HSE uses `Room → Inspection / Hazard → CorrectiveAction`.
+
+Location deletion is blocked while assets exist. Asset deletion is blocked while incident or maintenance history exists. Schema validation rejects missing foreign keys, duplicate IDs, duplicate device states, invalid enums, malformed dates, and unsupported records.
+
+## Persistence and migration
+
+The current key is `hubops:workspace:v2`, stored as `{version: 2, exportedAt, data}`. On first load without v2 data, the service reads `hubops:workspace:v1`, normalizes every legacy entity, maps the four foundation asset categories to the required taxonomy, validates all relationships, and saves a v2 copy. The v1 bytes are retained as a recovery fallback.
+
+Imports use the same migration and validation path. Invalid JSON or structurally invalid data never replaces the active workspace.
+
+## Simulated monitoring
+
+One provider-owned interval samples every asset at the configured frequency. Applicable metrics are determined by category. Telemetry is capped at 40 points per asset and 600 globally; Activity Log and notifications are capped separately.
+
+Fault reconciliation updates asset and device health, appends fault history, creates at most one active monitoring incident for an `(assetId, faultCode)` pair, and emits one notification/activity event. Recovery clears simulated faults and restores technical health but intentionally does not close the incident workflow.
+
+## Security boundary
+
+LocalStorage is not authentication, authorization, secure storage, or a server audit log. A production version must move validation and access control to a backend and use approved device-ingestion and database services.
