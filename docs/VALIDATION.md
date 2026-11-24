@@ -19,3 +19,7 @@ The foundation workflow installs dependencies, runs domain tests and builds stri
 - Keyboard-only navigation and narrow-screen review.
 
 Frontend demonstration only; not approved for production infrastructure data.
+
+## Operations extension — 2026-11-24
+
+Seven domain tests passed locally using Node TypeScript stripping on temporary copies with explicit .ts import extensions (the application source imports were unchanged). Coverage includes seed relationships, metrics, dependency-safe deletion, incident resolution, relationship validation, location paths and CSV formula neutralization. Full strict TypeScript and production build are checked by GitHub Actions after upload. Manual UI interaction review is still pending.

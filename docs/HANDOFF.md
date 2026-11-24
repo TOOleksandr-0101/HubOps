@@ -17,9 +17,13 @@ Overview, Facilities, Team & Tasks, Settings; shell, themes, responsive navigati
 
 Asset (room/category/status), Incident (asset/severity/status/date), Building (address/manager), Floor (building), Room (floor/manager/status), Employee (name/role/demo email), Task (assignee/priority/deadline/status), MaintenanceRecord (asset/schedule/status), SafetyInspection (room/inspector/date/result), Telemetry (asset/metric/value/unit/time), ActivityLog (message/time). Full definitions are authoritative in `types/`.
 
-## Second contributor ownership
+## Operations extension
 
-Asset management, incident workflows, live hardware telemetry, maintenance workflows and HSE inspections remain unimplemented. Analytics is also a placeholder. Do not interpret demo incident or telemetry types as integrated infrastructure.
+Operations.tsx now provides typed CRUD for assets, incidents, maintenance and inspections using shared operations helpers. Monitoring.tsx manually creates explicitly simulated temperature samples. Analytics.tsx derives reports and exports CSV with quoted cells and formula-prefix protection. All sidebar destinations now have implemented pages; Planned.tsx is retained only as the unknown-route fallback.
+
+New shared helpers in utils/operations.ts validate required relationships, prevent deleting linked assets, calculate room paths and encode CSV. Reuse these helpers for future workflows. Resolving an incident does not automatically change the asset condition: these are separate facts requiring explicit updates.
+
+Real telemetry ingestion, authentication, backend storage and multiuser collaboration remain future work.
 
 ## Known limits and next steps
 
