@@ -1,0 +1,2 @@
+import {useEffect,useState} from 'react';
+export function useTheme(){const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('hubops:theme')==='dark'?'dark':'light';}catch{return 'light';}});useEffect(()=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem('hubops:theme',theme);}catch{/* Theme still works for this session. */}},[theme]);return {theme,toggle:()=>setTheme(t=>t==='light'?'dark':'light')};}
