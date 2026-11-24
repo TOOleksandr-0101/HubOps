@@ -1,0 +1,9 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createSeed} from '../data/seed';
+import {removeOperation,upsertOperation,roomPath,toCsv} from './operations';
+import {metrics} from './domain';
+test('equipment deletion preserves linked records and requires explicit dependency removal',()=>{const d=createSeed();assert.throws(()=>removeOperation(d,'assets',d.assets[0].id),/linked/);const free={id:'free',name:'Spare',category:'Computing',roomId:d.rooms[0].id,status:'operational' as const};const next=upsertOperation(d,'assets',free);assert.equal(removeOperation(next,'assets','free').assets.length,60);assert.equal(d.assets.length,60);});
+test('incident resolution updates overview metrics without changing asset condition',()=>{const d=createSeed();const i=d.incidents.find(x=>x.status==='open')!;const next=upsertOperation(d,'incidents',{...i,status:'resolved'});assert.equal(metrics(next).incidents,metrics(d).incidents-1);assert.deepEqual(next.assets,d.assets);assert.equal(d.incidents.find(x=>x.id===i.id)?.status,'open');});
+test('operations reject missing relationships and empty equipment names',()=>{const d=createSeed();assert.throws(()=>upsertOperation(d,'assets',{...d.assets[0],roomId:'missing'}),/room/);assert.throws(()=>upsertOperation(d,'assets',{...d.assets[0],name:'  '}),/required/);assert.throws(()=>upsertOperation(d,'maintenance',{...d.maintenance[0],scheduledAt:'invalid'}),/date/);assert.throws(()=>upsertOperation(d,'inspections',{id:'i',roomId:d.rooms[0].id,inspectorId:'missing',date:'2026-11-24',passed:true}),/inspector/);});
+test('location paths and CSV exports preserve content and neutralize formula cells',()=>{const d=createSeed();assert.match(roomPath(d,d.rooms[0].id),/North Campus/);const csv=toCsv([['Name','Category'],['=SUM(1,2)','a"b']]);assert.ok(csv.includes('"\'=SUM(1,2)"'));assert.ok(csv.includes('"a""b"'));});
